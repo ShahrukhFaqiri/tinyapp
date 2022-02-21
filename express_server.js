@@ -6,7 +6,6 @@ const PORT = 8080;
 const generateRandomString = () => { //Randomly Generated string of 6 length;
   return Math.random().toString(20).substr(2, 6)
 };
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
@@ -35,8 +34,10 @@ app.get('/urls/new', (req, res) => {
 
 //User Submit their links
 app.post('/urls', (req, res) => {
-  console.log(generateRandomString())
-  console.log(req.body);
+  const randString = generateRandomString();
+  urlDatabase[randString] = req.body.longURL;
+  console.log("Database:",urlDatabase)
+  console.log("Parser:",req.body);
   res.send('Ok');
 });
 
@@ -46,9 +47,7 @@ app.get('/u/:shortURL', (req, res) => {
     longURL: urlDatabase[req.params.shortURL],
   };
   res.render('urls_show', templateVars);
-
-
-  const longURL = 
+  const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL)
 });
 
