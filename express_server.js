@@ -3,6 +3,10 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080;
 
+const generateRandomString = () => {
+
+};
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
@@ -29,6 +33,7 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new');
 });
 
+//User Submit their links
 app.post('/urls', (req, res) => {
   console.log(req.body);
   res.send('Ok');
