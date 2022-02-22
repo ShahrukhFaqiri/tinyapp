@@ -19,27 +19,30 @@ app.get('/', (req, res) => {
   res.send(`Hello!`);
 });
 
+//LIST JSON OF DB
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
+
+//SUBMIT LONG URL
+app.get('/urls/new', (req, res) => {
+  res.render('urls_new');
+});
+
+//LIST OF URLS
 
 app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
 
-app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
-});
-
-//User Submit their links
 app.post('/urls', (req, res) => {
   const randString = generateRandomString();
   urlDatabase[randString] = req.body.longURL;
   res.redirect(`/urls`)
 
 });
-
+//DATA OF SHORT URL
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
@@ -49,7 +52,7 @@ app.get('/urls/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL)
 });
-
+//DELETE REQUEST
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
