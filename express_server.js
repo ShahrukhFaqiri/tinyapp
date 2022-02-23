@@ -3,8 +3,9 @@ const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080;
 
-const generateRandomString = () => { //Randomly Generated string of 6 length;
-  return Math.random().toString(20).substr(2, 6)
+const generateRandomString = () => {
+  //Randomly Generated string of 6 length;
+  return Math.random().toString(20).substr(2, 6);
 };
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
@@ -37,26 +38,23 @@ app.get('/urls', (req, res) => {
 app.post('/urls', (req, res) => {
   const randString = generateRandomString();
   urlDatabase[randString] = req.body.longURL;
-  res.redirect(`/urls`)
-
+  res.redirect(`/urls`);
 });
-
-//DATA OF SHORT URL
-app.get('/urls/:shortURL', (req, res) => {
+app.get('/urls/:shortURL', (req, res) => { //REDIRECT
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
   const longURL = urlDatabase[req.params.shortURL];
-  res.redirect(longURL)
+  res.redirect(longURL);
 });
 
 //DELETE REQUEST
 app.post('/urls/:shortURL/delete', (req, res) => {
   const shortURL = req.params.shortURL;
   delete urlDatabase[shortURL];
-  res.redirect(`/urls`)
-})
+  res.redirect(`/urls`);
+});
 
 //TEST
 app.get('/hello', (req, res) => {
