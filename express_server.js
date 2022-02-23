@@ -2,17 +2,17 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const PORT = 8080;
-
-const generateRandomString = () => {
-  //Randomly Generated string of 6 length;
-  return Math.random().toString(20).substr(2, 6);
-};
 app.use(bodyParser.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
   b2xVn2: 'http://www.lighthouselabs.ca',
   '9sm5xK': 'http://www.google.com',
+};
+
+const generateRandomString = () => {
+  //Randomly Generated string/number of 6 length;
+  return Math.random().toString(20).substr(2, 6);
 };
 
 //Welcome Page
@@ -35,16 +35,22 @@ app.get('/urls', (req, res) => {
   const templateVars = { urls: urlDatabase };
   res.render('urls_index', templateVars);
 });
+
 app.post('/urls', (req, res) => {
   const randString = generateRandomString();
   urlDatabase[randString] = req.body.longURL;
   res.redirect(`/urls`);
 });
-app.get('/urls/:shortURL', (req, res) => { //REDIRECT
+
+app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
+  res.render('urls_show', templateVars);
+});
+
+app.get('/u/:shortURL', (req, res) => {
   const longURL = urlDatabase[req.params.shortURL];
   res.redirect(longURL);
 });
