@@ -43,7 +43,17 @@ app.get('/urls.json', (req, res) => {
 
 //SUBMIT LONG URL
 app.get('/urls/new', (req, res) => {
-  res.render('urls_new');
+  const userId = req.cookies['user_id'];
+  if(userId){
+    const templatesVar = {
+      user: users[req.cookies['user_id']]
+    }
+    res.render('urls_new', templatesVar);
+  }
+  else{
+    res.redirect('/register')
+  }
+  
 });
 
 //LIST OF URLS
@@ -111,11 +121,11 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
   const user_id = generateRandomString();
+  
   if (!email || !password) {
     return res.status(404).send('Please fill both fields');
   }
   for (const userId in users) {
-    console.log(users[userId].email);
     if (users[userId].email === email) {
       return res.status(400).send('Duplicate Email');
     } else if (users[userId].email !== email) {
