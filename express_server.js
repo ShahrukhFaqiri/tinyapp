@@ -111,14 +111,18 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
   const user_id = generateRandomString();
-
   if (!email || !password) {
-    return res.redirect('/register');
+    return res.status(404).send('Please fill both fields');
   }
-
-  users[user_id] = { user_id, email, password };
-  res.cookie('user_id', user_id);
-  // console.log(users[id]);
+  for (const userId in users) {
+    console.log(users[userId].email);
+    if (users[userId].email === email) {
+      return res.status(400).send('Duplicate Email');
+    } else if (users[userId].email !== email) {
+      users[user_id] = { user_id, email, password };
+      res.cookie('user_id', user_id);
+    }
+  }
   res.redirect('/urls');
 });
 
