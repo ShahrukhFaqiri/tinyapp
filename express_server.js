@@ -121,7 +121,7 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
   const user_id = generateRandomString();
-  
+
   if (!email || !password) {
     return res.status(404).send('Please fill both fields');
   }
@@ -135,6 +135,10 @@ app.post('/register', (req, res) => {
   }
   res.redirect('/urls');
 });
+
+app.get('/login', (req, res) => {
+  res.render('login');
+})
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
