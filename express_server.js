@@ -49,7 +49,7 @@ app.get('/urls/new', (req, res) => {
 //LIST OF URLS
 app.get('/urls', (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
+    user_id: req.cookies['user_id'],
     urls: urlDatabase,
   };
   res.render('urls_index', templateVars);
@@ -63,7 +63,7 @@ app.post('/urls', (req, res) => {
 
 app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
-    username: req.cookies['username'],
+    user_id: req.cookies['user_id'],
     shortURL: req.params.shortURL,
     longURL: urlDatabase[req.params.shortURL],
   };
@@ -99,7 +99,7 @@ app.post('/login', (req, res) => {
 
 //USER LOGOUT
 app.post('/logout', (req, res) => {
-  res.clearCookie('username');
+  res.clearCookie('user_id');
   return res.redirect('/urls');
 });
 
