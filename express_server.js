@@ -26,12 +26,22 @@ const users = {
   },
 };
 
+//RANDOM STRING
 const generateRandomString = () => {
-  //Randomly Generated string/number of 6 length;
   return Math.random().toString(20).substr(2, 6);
 };
 
-//Welcome Page
+//AUTH USER BY EMAIL
+const findUserByEmail = (email) => {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return undefined;
+};
+
+//HOME PAGE
 app.get('/', (req, res) => {
   res.send(`Hello!`);
 });
@@ -44,16 +54,14 @@ app.get('/urls.json', (req, res) => {
 //SUBMIT LONG URL
 app.get('/urls/new', (req, res) => {
   const userId = req.cookies['user_id'];
-  if(userId){
+  if (userId) {
     const templatesVar = {
-      user: users[req.cookies['user_id']]
-    }
+      user: users[req.cookies['user_id']],
+    };
     res.render('urls_new', templatesVar);
+  } else {
+    res.redirect('/register');
   }
-  else{
-    res.redirect('/register')
-  }
-  
 });
 
 //LIST OF URLS
@@ -100,13 +108,6 @@ app.post('/urls/:id', (req, res) => {
   return res.redirect('/urls');
 });
 
-//USER LOGIN
-// app.post('/login', (req, res) => {
-//   const { username } = req.body;
-//   res.cookie('username', username);
-//   return res.redirect('/urls');
-// });
-
 //USER LOGOUT
 app.post('/logout', (req, res) => {
   res.clearCookie('user_id');
@@ -121,24 +122,39 @@ app.get('/register', (req, res) => {
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
   const user_id = generateRandomString();
-
   if (!email || !password) {
     return res.status(404).send('Please fill both fields');
   }
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return res.status(400).send('Duplicate Email');
-    } else if (users[userId].email !== email) {
-      users[user_id] = { user_id, email, password };
-      res.cookie('user_id', user_id);
-    }
+  const userObject = findUserByEmail(email);
+  if (!userObject) {
+    users[user_id] = { id: user_id, email, password };
+    res.cookie('user_id', user_id);
+    res.redirect('/urls');
+  } else {
+    return res.status(400).send('Duplicate Email');
   }
-  res.redirect('/urls');
 });
 
+//LOGIN FEATURES
 app.get('/login', (req, res) => {
   res.render('login');
-})
+});
+
+//USER LOGIN
+app.post('/login', (req, res) => {
+  const { email, password } = req.body;
+  const userObject = findUserByEmail(email);
+  if (!userObject) {
+    return res.status(404).send('User not registered');
+  } else {
+    if (userObject.password !== password) {
+      return res.status(403).send('Incorrect Password');
+    } else {
+      res.cookie('user_id', userObject.id);
+      res.redirect('/urls');
+    }
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}`);
