@@ -9,8 +9,14 @@ app.use(cookieParser());
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
-  b2xVn2: 'http://www.lighthouselabs.ca',
-  '9sm5xK': 'http://www.google.com',
+  b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "aJ48lW"
+  },
+  i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "aJ48lW"
+  }
 };
 
 const users = {
@@ -23,6 +29,11 @@ const users = {
     id: 'user2RandomID',
     email: 'user2@example.com',
     password: 'dishwasher-funk',
+  },
+  aJ48lW: {
+    id: 'aJ48lW',
+    email: 'userTest@gmail.com',
+    password: '123',
   },
 };
 
@@ -41,6 +52,17 @@ const findUserByEmail = (email) => {
   return undefined;
 };
 
+const urlsForUser = (id, db) => {
+  console.log(id)
+  let userUrls = {};
+  for(const url in db){
+    if(db[url].userID === id){
+      userUrls[url] = db[url].longURL;
+    }
+  }
+  return userUrls;
+}
+
 //HOME PAGE
 app.get('/', (req, res) => {
   res.send(`Hello!`);
@@ -54,28 +76,35 @@ app.get('/urls.json', (req, res) => {
 //SUBMIT LONG URL
 app.get('/urls/new', (req, res) => {
   const userId = req.cookies['user_id'];
-  if (userId) {
-    const templatesVar = {
-      user: users[req.cookies['user_id']],
-    };
-    res.render('urls_new', templatesVar);
-  } else {
-    res.redirect('/register');
+  if (!userId) {
+    return res.redirect('/login');
   }
+  const templatesVar = {
+    user: users[req.cookies['user_id']],
+  };
+  res.render('urls_new', templatesVar);
 });
 
 //LIST OF URLS
 app.get('/urls', (req, res) => {
+
+  // if(!req.cookies['user_id']){
+  //   return res.status(401).send("Not authorized");
+  // } 
+let urls = urlsForUser(req.cookies['user_id'], urlDatabase);
+// console.log('test:', urls);
   const templateVars = {
     user: users[req.cookies['user_id']],
-    urls: urlDatabase,
+    urls: urls,
+
   };
+  
   res.render('urls_index', templateVars);
 });
 
 app.post('/urls', (req, res) => {
   const randString = generateRandomString();
-  urlDatabase[randString] = req.body.longURL;
+  urlDatabase[randString] = { longURL: req.body.longURL, userID: req.cookies['user_id']};
   return res.redirect(`/urls`);
 });
 
@@ -83,28 +112,32 @@ app.get('/urls/:shortURL', (req, res) => {
   const templateVars = {
     user: users[req.cookies['user_id']],
     shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL],
+    longURL: urlDatabase[req.params.shortURL].longURL,
   };
   res.render('urls_show', templateVars);
 });
 
 //GO TO LONG URL
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL];
+  const longURL = urlDatabase[req.params.shortURL].longURL;
   return res.redirect(longURL);
 });
 
 //DELETE REQUEST
 app.post('/urls/:shortURL/delete', (req, res) => {
+  
   const shortURL = req.params.shortURL;
-  delete urlDatabase[shortURL];
-  return res.redirect(`/urls`);
+  if(urlDatabase[shortURL].userID === req.cookies['user_id']){
+    delete urlDatabase[shortURL];
+    return res.redirect(`/urls`);
+  }
+  res.status(401).send(`You don't own this URL!`);
 });
 
 //EDITING EXISTING LINK
 app.post('/urls/:id', (req, res) => {
   const shortURL = req.params.id;
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL].longURL = req.body.longURL;
   return res.redirect('/urls');
 });
 
