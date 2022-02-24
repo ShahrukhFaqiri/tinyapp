@@ -116,7 +116,10 @@ app.post('/logout', (req, res) => {
 
 //USER REGISTRATION PAGE
 app.get('/register', (req, res) => {
-  res.render('registration');
+  const templatesVar = {
+    user: users[req.cookies['user_id']],
+  };
+  res.render('registration', templatesVar);
 });
 
 app.post('/register', (req, res) => {
@@ -137,7 +140,11 @@ app.post('/register', (req, res) => {
 
 //LOGIN FEATURES
 app.get('/login', (req, res) => {
-  res.render('login');
+  const templatesVar = {
+    user: users[req.cookies['user_id']],
+  };
+  res.render('login',templatesVar);
+  
 });
 
 //USER LOGIN
