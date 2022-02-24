@@ -114,7 +114,6 @@ app.post('/register', (req, res) => {
   if (!email || !password) {
     return res.status(404).send('Please fill both fields');
   }
-
   for (const userId in users) {
     console.log(users[userId].email);
     if (users[userId].email === email) {
