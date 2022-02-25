@@ -50,7 +50,10 @@ const users = {
 
 //HOME PAGE
 app.get('/', (req, res) => {
-  res.send(`Hello!`);
+  if (!req.session.user_id) {
+    return res.redirect('/login');
+  }
+  return res.redirect('urls');
 });
 
 //LIST JSON OF DB
@@ -60,8 +63,7 @@ app.get('/urls.json', (req, res) => {
 
 //SUBMIT LONG URL
 app.get('/urls/new', (req, res) => {
-  const userId = req.session.user_id;
-  if (!userId) {
+  if (!req.session.user_id) {
     return res.redirect('/login');
   }
   const templatesVar = {
@@ -70,8 +72,49 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new', templatesVar);
 });
 
+app.get('/urls/:shortURL', (req, res) => {
+  if (req.session.user_id) {
+    if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
+      const templateVars = {
+        user: users[req.session.user_id],
+        shortURL: req.params.shortURL,
+        longURL: urlDatabase[req.params.shortURL].longURL,
+      };
+      res.render('urls_show', templateVars);
+    } else {
+      return res.status(401).send(`You don't own this URL, please login if you do.`);
+    }
+  }
+  return res.status(404).send(`Please login`);
+});
+
+//GO TO LONG URL
+app.get('/u/:shortURL', (req, res) => {
+  if (urlDatabase[req.params.shortURL]) {
+    let longURL = urlDatabase[req.params.shortURL].longURL;
+    res.redirect(longURL);
+  }
+  return res.status(404).send('Url does not exist');
+});
+
+//DELETE REQUEST
+app.post('/urls/:shortURL/delete', (req, res) => {
+  if (req.session.user_id) {
+    if (urlDatabase[req.params.shortURL].userID === req.session.user_id) {
+      delete urlDatabase[req.params.shortURL];
+      return res.redirect(`/urls`);
+    } else {
+      return res.status(401).send(`You don't own this URL!`);
+    }
+  }
+  return res.status(401).send(`Log in please`);
+});
+
 //LIST OF URLS
 app.get('/urls', (req, res) => {
+  if (!req.session.user_id) {
+    return res.status(404).send('Please Login or Register to view this page!');
+  }
   let urls = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = {
     user: users[req.session.user_id],
@@ -89,38 +132,9 @@ app.post('/urls', (req, res) => {
   return res.redirect(`/urls`);
 });
 
-app.get('/urls/:shortURL', (req, res) => {
-  const templateVars = {
-    user: users[req.session.user_id],
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-  };
-  res.render('urls_show', templateVars);
-});
-
-//GO TO LONG URL
-app.get('/u/:shortURL', (req, res) => {
-  if (urlDatabase[req.params.shortURL]) {
-    let longURL = urlDatabase[req.params.shortURL].longURL;
-    res.redirect(longURL);
-  }
-  return res.status(404).send('Url does not exist');
-});
-
-//DELETE REQUEST
-app.post('/urls/:shortURL/delete', (req, res) => {
-  if (urlDatabase[req.params.shortURL]) {
-    if (urlDatabase[req.params.shortURL].userID === req.session.user_id) {
-      delete urlDatabase[req.params.shortURL];
-      return res.redirect(`/urls`);
-    }
-  }
-  res.status(401).send(`You don't own this URL!`);
-});
-
 //EDITING EXISTING LINK
-app.post('/urls/:id', (req, res) => {
-  const shortURL = req.params.id;
+app.post('/urls/:shortURL', (req, res) => {
+  const shortURL = req.params.shortURL;
   urlDatabase[shortURL].longURL = req.body.longURL;
   return res.redirect('/urls');
 });
@@ -158,6 +172,9 @@ app.post('/register', (req, res) => {
 
 //LOGIN FEATURES
 app.get('/login', (req, res) => {
+  if (req.session.user_id) {
+    return res.redirect('/urls');
+  }
   const templatesVar = {
     user: users[req.session.user_id],
   };
@@ -174,7 +191,6 @@ app.post('/login', (req, res) => {
     if (!bcrypt.compareSync(password, users[userObject].hashedPassword)) {
       return res.status(403).send('Incorrect Password');
     } else {
-      // console.log(userObject);
       req.session.user_id = userObject;
       res.redirect('/urls');
     }
