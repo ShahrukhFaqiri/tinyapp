@@ -104,7 +104,7 @@ app.get('/u/:shortURL', (req, res) => {
     let longURL = urlDatabase[req.params.shortURL].longURL;
     res.redirect(longURL);
   }
-  res.status(404).send('Url does not exist');
+  return res.status(404).send('Url does not exist');
 });
 
 //DELETE REQUEST
@@ -171,10 +171,11 @@ app.post('/login', (req, res) => {
   if (!userObject) {
     return res.status(404).send('User not registered');
   } else {
-    if (!bcrypt.compareSync(password, userObject.hashedPassword)) {
+    if (!bcrypt.compareSync(password, users[userObject].hashedPassword)) {
       return res.status(403).send('Incorrect Password');
     } else {
-      req.session.user_id = userObject.id;
+      // console.log(userObject);
+      req.session.user_id = userObject;
       res.redirect('/urls');
     }
   }
