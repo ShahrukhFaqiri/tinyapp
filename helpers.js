@@ -4,10 +4,10 @@ const generateRandomString = () => {
 };
 
 //AUTH USER BY EMAIL
-const getUserByEmail = (email , users) => {
+const getUserByEmail = (email, users) => {
   for (const userId in users) {
     if (users[userId].email === email) {
-      return users[userId];
+      return userId;
     }
   }
   return undefined;
@@ -16,16 +16,16 @@ const getUserByEmail = (email , users) => {
 //LOOPING THROUGH USER URL
 const urlsForUser = (id, db) => {
   let userUrls = {};
-  for (const url in db) {
-    if (db[url].userID === id) {
-      userUrls[url] = db[url].longURL;
+  for (const key in db) {
+    if (db[key].userID === id) {
+      userUrls[key] = db[key].longURL;
     }
   }
   return userUrls;
 };
 
-module.exports = { 
+module.exports = {
   generateRandomString,
   getUserByEmail,
-  urlsForUser
-}
+  urlsForUser,
+};
