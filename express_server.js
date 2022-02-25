@@ -1,15 +1,22 @@
 const express = require('express');
+const {
+  generateRandomString,
+  getUserByEmail,
+  urlsForUser,
+} = require('./helpers');
 const bodyParser = require('body-parser');
-const cookieSession = require('cookie-session')
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const app = express();
 const PORT = 8080;
 
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cookieSession({
-  name: 'session',
-  keys: ['12xcb890a8x']
-}))
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: ['12xcb890a8x'],
+  })
+);
 app.set('view engine', 'ejs');
 
 const urlDatabase = {
@@ -39,32 +46,6 @@ const users = {
     email: 'userTest@gmail.com',
     password: '123',
   },
-};
-
-//RANDOM STRING
-const generateRandomString = () => {
-  return Math.random().toString(20).substr(2, 6);
-};
-
-//AUTH USER BY EMAIL
-const findUserByEmail = (email) => {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    }
-  }
-  return undefined;
-};
-
-//LOOPING THROUGH USER URL
-const urlsForUser = (id, db) => {
-  let userUrls = {};
-  for (const url in db) {
-    if (db[url].userID === id) {
-      userUrls[url] = db[url].longURL;
-    }
-  }
-  return userUrls;
 };
 
 //HOME PAGE
@@ -119,16 +100,20 @@ app.get('/urls/:shortURL', (req, res) => {
 
 //GO TO LONG URL
 app.get('/u/:shortURL', (req, res) => {
-  const longURL = urlDatabase[req.params.shortURL].longURL;
-  return res.redirect(longURL);
+  if (urlDatabase[req.params.shortURL]) {
+    let longURL = urlDatabase[req.params.shortURL].longURL;
+    res.redirect(longURL);
+  }
+  res.status(404).send('Url does not exist');
 });
 
 //DELETE REQUEST
 app.post('/urls/:shortURL/delete', (req, res) => {
-  const shortURL = req.params.shortURL;
-  if (urlDatabase[shortURL].userID === req.session.user_id) {
-    delete urlDatabase[shortURL];
-    return res.redirect(`/urls`);
+  if (urlDatabase[req.params.shortURL]) {
+    if (urlDatabase[req.params.shortURL].userID === req.session.user_id) {
+      delete urlDatabase[req.params.shortURL];
+      return res.redirect(`/urls`);
+    }
   }
   res.status(401).send(`You don't own this URL!`);
 });
@@ -161,7 +146,7 @@ app.post('/register', (req, res) => {
   if (!email || !password) {
     return res.status(404).send('Please fill both fields');
   }
-  const userObject = findUserByEmail(email);
+  const userObject = getUserByEmail(email, users);
   if (!userObject) {
     users[user_id] = { id: user_id, email, hashedPassword };
     req.session.user_id = user_id;
@@ -182,7 +167,7 @@ app.get('/login', (req, res) => {
 //USER LOGIN
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-  const userObject = findUserByEmail(email);
+  const userObject = getUserByEmail(email, users);
   if (!userObject) {
     return res.status(404).send('User not registered');
   } else {
