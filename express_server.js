@@ -72,7 +72,6 @@ app.get('/', (req, res) => {
   res.send(`Hello!`);
 });
 
-
 //LIST JSON OF DB
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
