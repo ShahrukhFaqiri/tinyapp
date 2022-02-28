@@ -4,11 +4,12 @@ const {
   getUserByEmail,
   urlsForUser,
 } = require('./helpers');
+const { urlDatabase, users } = require('./data');
 const bodyParser = require('body-parser');
 const cookieSession = require('cookie-session');
 const bcrypt = require('bcryptjs');
 const app = express();
-const PORT = 8080;
+const PORT = 6767;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
@@ -19,35 +20,6 @@ app.use(
 );
 app.set('view engine', 'ejs');
 
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: 'https://www.tsn.ca',
-    userID: 'aJ48lW',
-  },
-  i3BoGr: {
-    longURL: 'https://www.google.ca',
-    userID: 'aJ48lW',
-  },
-};
-
-const users = {
-  userRandomID: {
-    id: 'userRandomID',
-    email: 'user@example.com',
-    password: 'purple-monkey-dinosaur',
-  },
-  user2RandomID: {
-    id: 'user2RandomID',
-    email: 'user2@example.com',
-    password: 'dishwasher-funk',
-  },
-  aJ48lW: {
-    id: 'aJ48lW',
-    email: 'userTest@gmail.com',
-    password: '123',
-  },
-};
-
 //HOME PAGE
 app.get('/', (req, res) => {
   if (!req.session.user_id) {
@@ -56,7 +28,7 @@ app.get('/', (req, res) => {
   return res.redirect('urls');
 });
 
-//LIST JSON OF DB
+//LIST JSON OF DB *TEST*
 app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
@@ -72,6 +44,7 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new', templatesVar);
 });
 
+//GETTING YOUR OWN URL, IF YOU DON'T OWN IT IT DISPLAYS AN ERROR
 app.get('/urls/:shortURL', (req, res) => {
   if (req.session.user_id) {
     if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
@@ -82,22 +55,26 @@ app.get('/urls/:shortURL', (req, res) => {
       };
       res.render('urls_show', templateVars);
     } else {
-      return res.status(401).send(`You don't own this URL, please login if you do.`);
+      return res
+        .status(401)
+        .send(`You don't own this URL, please login if you do.`);
     }
+  } else {
+    return res.status(404).send(`Please login`);
   }
-  return res.status(404).send(`Please login`);
 });
 
-//GO TO LONG URL
+//ANY USERS CAN GO TO URL
 app.get('/u/:shortURL', (req, res) => {
   if (urlDatabase[req.params.shortURL]) {
     let longURL = urlDatabase[req.params.shortURL].longURL;
     res.redirect(longURL);
+  } else {
+    return res.status(404).send('Url does not exist');
   }
-  return res.status(404).send('Url does not exist');
 });
 
-//DELETE REQUEST
+//DELETE URLS REQUEST MADE BY USER
 app.post('/urls/:shortURL/delete', (req, res) => {
   if (req.session.user_id) {
     if (urlDatabase[req.params.shortURL].userID === req.session.user_id) {
@@ -110,10 +87,10 @@ app.post('/urls/:shortURL/delete', (req, res) => {
   return res.status(401).send(`Log in please`);
 });
 
-//LIST OF URLS
+//DISPLAYS LIST OF URLS TO PAGE
 app.get('/urls', (req, res) => {
   if (!req.session.user_id) {
-    return res.status(404).send('Please Login or Register to view this page!');
+    return res.status(401).send('Please Login or Register to view this page!');
   }
   let urls = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = {
@@ -123,13 +100,18 @@ app.get('/urls', (req, res) => {
   res.render('urls_index', templateVars);
 });
 
+//MAKING A POST TO /URLS REDIRECTS TO THAT URL LINK
 app.post('/urls', (req, res) => {
-  const randString = generateRandomString();
-  urlDatabase[randString] = {
-    longURL: req.body.longURL,
-    userID: req.session.user_id,
-  };
-  return res.redirect(`/urls`);
+  if (!users[req.session.user_id]) {
+    return res.redirect(`/login`);
+  } else {
+    const randString = generateRandomString();
+    urlDatabase[randString] = {
+      longURL: req.body.longURL,
+      userID: req.session.user_id,
+    };
+    return res.redirect(`/urls/${randString}`);
+  }
 });
 
 //EDITING EXISTING LINK
@@ -139,13 +121,13 @@ app.post('/urls/:shortURL', (req, res) => {
   return res.redirect('/urls');
 });
 
-//USER LOGOUT
+//USER LOGOUT && CLEAR COOKIES
 app.post('/logout', (req, res) => {
-  req.session.user_id = null;
+  req.session = null;
   return res.redirect('/urls');
 });
 
-//USER REGISTRATION PAGE
+//REGISTRATION PAGE GET
 app.get('/register', (req, res) => {
   const templatesVar = {
     user: users[req.session.user_id],
@@ -153,6 +135,7 @@ app.get('/register', (req, res) => {
   res.render('registration', templatesVar);
 });
 
+//REGISTRATION PAGE POST
 app.post('/register', (req, res) => {
   const { email, password } = req.body;
   const hashedPassword = bcrypt.hashSync(password, 10);
