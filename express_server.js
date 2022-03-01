@@ -46,6 +46,12 @@ app.get('/urls/new', (req, res) => {
 
 //GETTING YOUR OWN URL, IF YOU DON'T OWN IT IT DISPLAYS AN ERROR
 app.get('/urls/:shortURL', (req, res) => {
+  if(!Object.keys(urlDatabase).includes(req.params.shortURL)){
+    return res
+    .status(401)
+    .send(`The URL Doesn't exist.`);
+  }
+
   if (req.session.user_id) {
     if (req.session.user_id === urlDatabase[req.params.shortURL].userID) {
       const templateVars = {
@@ -90,7 +96,7 @@ app.post('/urls/:shortURL/delete', (req, res) => {
 //DISPLAYS LIST OF URLS TO PAGE
 app.get('/urls', (req, res) => {
   if (!req.session.user_id) {
-    return res.status(401).send('Please Login or Register to view this page!');
+    return res.send(`<h3>Please Login or Register to view this page!</h3> <a href='/login'>Login</a> <a href='/register'>Register</a>`)
   }
   let urls = urlsForUser(req.session.user_id, urlDatabase);
   const templateVars = {
